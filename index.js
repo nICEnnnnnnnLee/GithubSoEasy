@@ -29,7 +29,8 @@ function init(domain) {
 function modifyCookies(headers) {
   headers.forEach((value, key) => {
     if (key == 'set-cookie') {
-      new_value = value.replaceAll('domain=.github.com', `domain=.${your_domain}`)
+      let new_value = value.replaceAll('domain=.github.com', `domain=.${your_domain}`)
+      new_value = new_value.replaceAll('domain=github.com', `domain=${your_domain}`)
       headers.set(key, new_value)
       //console.log(key, new_value)
     }
