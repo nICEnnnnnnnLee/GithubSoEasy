@@ -120,7 +120,7 @@ class CFWorker:
         # print(res)
         return res["success"]
 
-    def create_dns_a_record(self, zone_id, name, ip, proxied=False):
+    def create_dns_a_record(self, zone_id, name, ip, proxied=True):
         """
         建立DNS ip 解析
         """
@@ -197,12 +197,12 @@ def method2():
         codeload.<你的域名>/* 映射到路由上
         releases.<你的域名>/* 映射到路由上
     建立7条DNS A记录
-        git.<你的域名> -> 1.1.1.1
-        raw.<你的域名> -> 1.1.1.1
-        assets.<你的域名> -> 1.1.1.1
-        avatars.<你的域名> -> 1.1.1.1
-        codeload.<你的域名> -> 1.1.1.1
-        releases.<你的域名> -> 1.1.1.1
+        git.<你的域名> -> 8.8.8.8
+        raw.<你的域名> -> 8.8.8.8
+        assets.<你的域名> -> 8.8.8.8
+        avatars.<你的域名> -> 8.8.8.8
+        codeload.<你的域名> -> 8.8.8.8
+        releases.<你的域名> -> 8.8.8.8
     """
     cf_worker = CFWorker(email=YOUR_EMAIL, api_key=YOUR_API_KEY, account_id=YOUR_ACCOUNT_ID)
 
@@ -237,7 +237,7 @@ def method2():
     for prefix in prefixs:
         dns_record = f'{prefix}.{HOME_DOMAIN}'
         print("正在建立DNS记录 ", dns_record)
-        result = cf_worker.create_dns_a_record(zone_id, dns_record, '1.1.1.1')
+        result = cf_worker.create_dns_a_record(zone_id, dns_record, '8.8.8.8')
         print("建立DNS记录: ", result)
         if not result:
             exit(-1)
@@ -247,12 +247,12 @@ def method2():
 def delete_all_confs():
     """
     删除7条DNS A记录
-        git.<你的域名> -> 1.1.1.1
-        raw.<你的域名> -> 1.1.1.1
-        assets.<你的域名> -> 1.1.1.1
-        avatars.<你的域名> -> 1.1.1.1
-        codeload.<你的域名> -> 1.1.1.1
-        releases.<你的域名> -> 1.1.1.1
+        git.<你的域名> -> 8.8.8.8
+        raw.<你的域名> -> 8.8.8.8
+        assets.<你的域名> -> 8.8.8.8
+        avatars.<你的域名> -> 8.8.8.8
+        codeload.<你的域名> -> 8.8.8.8
+        releases.<你的域名> -> 8.8.8.8
     删除7条个workers:
         git.<你的域名>.workers.dev
         raw.<你的域名>.workers.dev
