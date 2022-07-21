@@ -47,8 +47,8 @@
     ```
     ps: 你也可以修改环境变量`HOME_DOMAIN`为你的域名
 
-4. 再参考步骤2~3，另外重复建立6个worker
-5. 将7个worker重命名为`git`、`raw`、`assets`、`avatars`、`camo`、`codeload`、`releases`
+4. 再参考步骤2~3，另外重复建立7个worker
+5. 将8个worker重命名为`git`、`raw`、`assets`、`avatars`、`camo`、`codeload`、`releases`、`object`
 6. 收藏地址框中的 `https://git.子域名.workers.dev`，以后可直接访问。  
 
 看不懂？点击<a href="https://nICEnnnnnnnLee.github.io/blog/2021/08/25/cloudflare-workers-github-proxy/" ><strong>这里</strong></a>傻瓜式超细致图文指导
