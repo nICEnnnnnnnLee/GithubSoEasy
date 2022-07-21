@@ -18,6 +18,7 @@ function init(domain) {
     [`camo.${domain}`, 'camo.githubusercontent.com'],
     [`codeload.${domain}`, 'codeload.github.com'],
     [`releases.${domain}`, 'github-releases.githubusercontent.com'],
+    [`object.${domain}`, 'objects.githubusercontent.com'],
   ]
   domain_pair_list.forEach(pair => {
     replace_dicts['https://' + pair[1]] = 'https://' + pair[0]

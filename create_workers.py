@@ -150,7 +150,7 @@ class CFWorker:
 
 def method1():
     """
-    创建7个worker并使之生效，分别为
+    创建8个worker并使之生效，分别为
         git.<你的域名>.workers.dev
         raw.<你的域名>.workers.dev
         assets.<你的域名>.workers.dev
@@ -158,6 +158,7 @@ def method1():
         camo.<你的域名>.workers.dev
         codeload.<你的域名>.workers.dev
         releases.<你的域名>.workers.dev
+        object.<你的域名>.workers.dev
     """
     cf_worker = CFWorker(email=YOUR_EMAIL, api_key=YOUR_API_KEY, account_id=YOUR_ACCOUNT_ID)
 
@@ -169,7 +170,7 @@ def method1():
         script_raw = f.read()
         script = script_raw.replace('<你的自定义域名>.workers.dev', f'{subdomain}.workers.dev')
 
-    worker_names = ['git', 'raw', 'assets', 'avatars', 'camo', 'codeload', 'releases']
+    worker_names = ['git', 'raw', 'assets', 'avatars', 'camo', 'codeload', 'releases', 'object']
     for name in worker_names:
         # cf_worker.upload_worker(script, woker_name = name)
         print("正在上传worker脚本: ", name)
@@ -189,20 +190,22 @@ def method2():
     """
     创建worker并使之生效
         git.<xxx>.workers.dev
-    将7条规则映射到路由上:
+    将8条规则映射到路由上:
         git.<你的域名>/* 
         raw.<你的域名>/* 映射到路由上
         assets.<你的域名>/* 映射到路由上
         avatars.<你的域名>/* 映射到路由上
         codeload.<你的域名>/* 映射到路由上
         releases.<你的域名>/* 映射到路由上
-    建立7条DNS A记录
+        object.<你的域名>/* 映射到路由上
+    建立8条DNS A记录
         git.<你的域名> -> 8.8.8.8
         raw.<你的域名> -> 8.8.8.8
         assets.<你的域名> -> 8.8.8.8
         avatars.<你的域名> -> 8.8.8.8
         codeload.<你的域名> -> 8.8.8.8
         releases.<你的域名> -> 8.8.8.8
+        object.<你的域名> -> 8.8.8.8
     """
     cf_worker = CFWorker(email=YOUR_EMAIL, api_key=YOUR_API_KEY, account_id=YOUR_ACCOUNT_ID)
 
@@ -225,7 +228,7 @@ def method2():
 
     # 建立路由
     zone_id = cf_worker.get_zone_id(domain=HOME_DOMAIN)
-    prefixs = ['git', 'raw', 'assets', 'avatars', 'camo', 'codeload', 'releases']
+    prefixs = ['git', 'raw', 'assets', 'avatars', 'camo', 'codeload', 'releases', 'object']
     for prefix in prefixs:
         route = f'{prefix}.{HOME_DOMAIN}/*'
         print("建立route: ", route)
@@ -246,14 +249,15 @@ def method2():
 
 def delete_all_confs():
     """
-    删除7条DNS A记录
+    删除8条DNS A记录
         git.<你的域名> -> 8.8.8.8
         raw.<你的域名> -> 8.8.8.8
         assets.<你的域名> -> 8.8.8.8
         avatars.<你的域名> -> 8.8.8.8
         codeload.<你的域名> -> 8.8.8.8
         releases.<你的域名> -> 8.8.8.8
-    删除7条个workers:
+        object.<你的域名> -> 8.8.8.8
+    删除8条个workers:
         git.<你的域名>.workers.dev
         raw.<你的域名>.workers.dev
         assets.<你的域名>.workers.dev
@@ -261,11 +265,12 @@ def delete_all_confs():
         camo.<你的域名>.workers.dev
         codeload.<你的域名>.workers.dev
         releases.<你的域名>.workers.dev
+        object.<你的域名>.workers.dev
     """
     cf_worker = CFWorker(email=YOUR_EMAIL, api_key=YOUR_API_KEY, account_id=YOUR_ACCOUNT_ID)
     zone_id = cf_worker.get_zone_id(domain=HOME_DOMAIN)
 
-    prefixs = ['git', 'raw', 'assets', 'avatars', 'camo', 'codeload', 'releases']
+    prefixs = ['git', 'raw', 'assets', 'avatars', 'camo', 'codeload', 'releases', 'object']
     for prefix in prefixs:
         cf_worker.delete_dns_a_record(zone_id, f'{prefix}.{HOME_DOMAIN}')
         cf_worker.delete_worker(prefix)
