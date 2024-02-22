@@ -1,5 +1,5 @@
 
-const your_domain = HOME_DOMAIN || '<你的自定义域名>.workers.dev'
+const your_domain = this['HOME_DOMAIN'] || '<你的自定义域名>'
 const login_page = 'https://nICEnnnnnnnLee.github.io/GithubSoEasy/login.html'
 
 //返回html时的替换字典
@@ -12,6 +12,9 @@ const req_dicts = {}
 function init(domain) {
   const domain_pair_list = [
     [`git.${domain}`, 'github.com'],
+    [`gist.${domain}`, 'gist.github.com'],
+    [`gist-notebooks.${domain}`, 'notebooks.githubusercontent.com'],
+    [`gist-ucontent.${domain}`, 'gist.githubusercontent.com'],
     [`raw.${domain}`, 'raw.githubusercontent.com'],
     [`assets.${domain}`, 'github.githubassets.com'],
     [`avatars.${domain}`, 'avatars.githubusercontent.com'],
@@ -21,7 +24,7 @@ function init(domain) {
     [`object.${domain}`, 'objects.githubusercontent.com'],
   ]
   domain_pair_list.forEach(pair => {
-    replace_dicts['https://' + pair[1]] = 'https://' + pair[0]
+    replace_dicts['//' + pair[1]] = '//' + pair[0]
     req_dicts[pair[0]] = pair[1]
   })
 }
@@ -31,7 +34,7 @@ function modifyCookies(headers) {
   headers.forEach((value, key) => {
     if (key == 'set-cookie') {
       let new_value = value.replaceAll('domain=.github.com', `domain=.${your_domain}`)
-      new_value = new_value.replaceAll('domain=github.com', `domain=${your_domain}`)
+      new_value = new_value.replaceAll('domain=github.com', `domain=git.${your_domain}`)
       headers.set(key, new_value)
       //console.log(key, new_value)
     }
@@ -57,7 +60,7 @@ async function fetchAndStream(request) {
   let response = await fetch(modifiedRequest)
   var new_response
   // 分情况返回
-  const content_type = response.headers.get('content-type').toLowerCase();
+  const content_type = response.headers.get('content-type')?.toLowerCase();
   if (content_type != null && content_type.includes('text/html') && content_type.includes('utf-8')) {
     //console.log('返回内容进行相应替换')
     // 如果是text/html，那么将域名文本进行替换
@@ -79,7 +82,7 @@ async function fetchAndStream(request) {
   if (new_response.headers.has('location')) {
     let location = new_response.headers.get('location')
     const url_location = new URL(location);
-    console.log(hostname, url_location.hostname)
+    //console.log(hostname, url_location.hostname)
     if (hostname != url_location.hostname) {
       location = replaceText(location)
       new_response.headers.set('location', location)
@@ -117,17 +120,22 @@ function modifyRequest(request) {
   if (request.headers.has('referer')) {
     const referer = request.headers.get('referer');
     const refererNew = referer.replaceAll(hostname, new_url.hostname);
-    new_request_headers.set('referer', refererNew);
+    new_request_headers.set('Referer', refererNew);
+  }
+  if (request.headers.has('Alt-Used')) {
+    const referer = request.headers.get('Alt-Used');
+    const refererNew = referer.replaceAll(hostname, new_url.hostname);
+    new_request_headers.set('Alt-Used', refererNew);
   }
   if (request.headers.has('origin')) {
     const origin = request.headers.get('origin');
     const originNew = origin.replaceAll(hostname, new_url.hostname);
-    new_request_headers.set('origin', originNew);
+    new_request_headers.set('Origin', originNew);
   }
-  //console.log(`${new_url.href}\n\n`)
-  // new_request_headers.forEach( (value, key) => {
-  //   console.log(`${key} => ${value}`)
-  // })
+  new_request_headers.delete('x-forwarded-proto')
+  //new_request_headers.forEach( (value, key) => {
+     //console.log(`${key} => ${value}`)
+  //})
   const modifiedRequest = new Request(new_url.href, {
     body: request.body,
     headers: new_request_headers,
