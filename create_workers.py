@@ -7,8 +7,10 @@ import requests,json
 YOUR_EMAIL = "你的邮箱"
 YOUR_API_KEY = "你的全局API_KEY"
 YOUR_ACCOUNT_ID = None # 可不填写，可以自己查询
-HOME_DOMAIN = None # 当自定义域名时填入类似'xxx.com'，否则为空
+HOME_DOMAIN = "xxx.com" # 必须填写
 
+# prefixs = ['git', 'raw', 'assets', 'avatars', 'camo', 'codeload', 'releases', 'object', 'gist', 'gist-notebooks', 'gist-ucontent']
+# 如果你的域名是 abc.com,  会占用git.abc.com 、 raw.abc.com等多个域名
 class CFWorker:
     def __init__(self, email, api_key, account_id=None, **args):
         self.email = email
@@ -107,9 +109,10 @@ class CFWorker:
         else:
             return res["result"]["subdomain"]
 
+
     def create_route(self, zone_id, pattern, script_name):
         """
-        建立到worker的路由
+        建立到worker的路由(不再使用，建议用bind_worker_with_domain替代)
         """
         # 新建路由
         url = f"https://api.cloudflare.com/client/v4/zones/{zone_id}/workers/routes"
@@ -148,70 +151,36 @@ class CFWorker:
         print(res)
         return res["success"]
 
-def method1():
-    """
-    创建8个worker并使之生效，分别为
-        git.<你的域名>.workers.dev
-        raw.<你的域名>.workers.dev
-        assets.<你的域名>.workers.dev
-        avatars.<你的域名>.workers.dev
-        camo.<你的域名>.workers.dev
-        codeload.<你的域名>.workers.dev
-        releases.<你的域名>.workers.dev
-        object.<你的域名>.workers.dev
-    """
-    cf_worker = CFWorker(email=YOUR_EMAIL, api_key=YOUR_API_KEY, account_id=YOUR_ACCOUNT_ID)
+    def bind_worker_with_domain(self, zone_id, domain, worker_name):
+        """
+        将domain域名绑定到worker上, 相当于 建立域名匹配的路由 + 添加代理域名DNS记录
+        """
+        # url = f"https://api.cloudflare.com/client/v4/accounts/{self.account_id}/workers/domains/changeset"
+        # data = [{"hostname":domain,"service":worker_name,"environment":"production","zone_id":zone_id}]
+        # data = json.dumps(data)
+        # res = requests.post(url, headers=self.headers, data=data).json()
+        url = f"https://api.cloudflare.com/client/v4/accounts/{self.account_id}/workers/domains/records"
+        data = {"hostname":domain,"service":worker_name,"environment":"production","zone_id":zone_id}
+        data = json.dumps(data)
+        res = requests.put(url, headers=self.headers, data=data).json()
+        print(url)
+        print(data)
+        print(res)
+        return res["success"]
 
-    subdomain = cf_worker.get_subdomain()
-    print("你的workers的域名是%s.workers.dev"%subdomain)
-    HOME_DOMAIN = f'{subdomain}.workers.dev'
-
-    with open("index.js", "r", encoding="utf-8") as f:
-        script_raw = f.read()
-        script = script_raw.replace('<你的自定义域名>.workers.dev', f'{subdomain}.workers.dev')
-
-    worker_names = ['git', 'raw', 'assets', 'avatars', 'camo', 'codeload', 'releases', 'object']
-    for name in worker_names:
-        # cf_worker.upload_worker(script, woker_name = name)
-        print("正在上传worker脚本: ", name)
-        result = cf_worker.upload_worker_with_env(script, name,[('HOME_DOMAIN', HOME_DOMAIN), ('WHITE_IP','')])
-        print("上传worker脚本成功: ", result)
-        if not result:
-            exit(-1)
-
-        print("正在使worker脚本生效: ", name)
-        result = cf_worker.enable_worker(name,True)
-        if not result:
-            exit(-1)
-        print("使worker脚本生效成功: ", result)
-    print(f'配置成功，请访问：https://git.{subdomain}.workers.dev')
-
-def method2():
+def method():
     """
     创建worker并使之生效
         git.<xxx>.workers.dev
-    将8条规则映射到路由上:
-        git.<你的域名>/* 
-        raw.<你的域名>/* 映射到路由上
-        assets.<你的域名>/* 映射到路由上
-        avatars.<你的域名>/* 映射到路由上
-        codeload.<你的域名>/* 映射到路由上
-        releases.<你的域名>/* 映射到路由上
-        object.<你的域名>/* 映射到路由上
-    建立8条DNS A记录
-        git.<你的域名> -> 8.8.8.8
-        raw.<你的域名> -> 8.8.8.8
-        assets.<你的域名> -> 8.8.8.8
-        avatars.<你的域名> -> 8.8.8.8
-        codeload.<你的域名> -> 8.8.8.8
-        releases.<你的域名> -> 8.8.8.8
-        object.<你的域名> -> 8.8.8.8
+    将域名映射到路由上:
+        git raw assets avatars codeload releases object gist gist-notebooks gist-ucontent
+            .<你的域名> 映射到路由上
     """
     cf_worker = CFWorker(email=YOUR_EMAIL, api_key=YOUR_API_KEY, account_id=YOUR_ACCOUNT_ID)
 
     with open("index.js", "r", encoding="utf-8") as f:
         script_raw = f.read()
-        script = script_raw.replace('<你的自定义域名>.workers.dev', HOME_DOMAIN)
+        script = script_raw.replace('<你的自定义域名>', HOME_DOMAIN)
 
     worker_name = 'git' # 默认脚本名称为git
     print("正在上传worker脚本: ", worker_name)
@@ -228,58 +197,21 @@ def method2():
 
     # 建立路由
     zone_id = cf_worker.get_zone_id(domain=HOME_DOMAIN)
-    prefixs = ['git', 'raw', 'assets', 'avatars', 'camo', 'codeload', 'releases', 'object']
+    prefixs = ['git', 'raw', 'assets', 'avatars', 'camo', 'codeload', 'releases', 'object', 'gist', 'gist-notebooks', 'gist-ucontent']
     for prefix in prefixs:
-        route = f'{prefix}.{HOME_DOMAIN}/*'
-        print("建立route: ", route)
-        result = cf_worker.create_route(zone_id, route, worker_name)
-        print("建立route成功: ", result)
-        if not result:
-            exit(-1)
-    # 建立DNS
-    for prefix in prefixs:
-        dns_record = f'{prefix}.{HOME_DOMAIN}'
-        print("正在建立DNS记录 ", dns_record)
-        result = cf_worker.create_dns_a_record(zone_id, dns_record, '8.8.8.8')
-        print("建立DNS记录: ", result)
+        domain = f'{prefix}.{HOME_DOMAIN}'
+        print("绑定域名: ", domain)
+        result = cf_worker.bind_worker_with_domain(zone_id, domain, worker_name)
+        print("绑定域名成功: ", result)
         if not result:
             exit(-1)
 
     print(f'配置成功，请访问：https://git.{HOME_DOMAIN}')
 
-def delete_all_confs():
-    """
-    删除8条DNS A记录
-        git.<你的域名> -> 8.8.8.8
-        raw.<你的域名> -> 8.8.8.8
-        assets.<你的域名> -> 8.8.8.8
-        avatars.<你的域名> -> 8.8.8.8
-        codeload.<你的域名> -> 8.8.8.8
-        releases.<你的域名> -> 8.8.8.8
-        object.<你的域名> -> 8.8.8.8
-    删除8条个workers:
-        git.<你的域名>.workers.dev
-        raw.<你的域名>.workers.dev
-        assets.<你的域名>.workers.dev
-        avatars.<你的域名>.workers.dev
-        camo.<你的域名>.workers.dev
-        codeload.<你的域名>.workers.dev
-        releases.<你的域名>.workers.dev
-        object.<你的域名>.workers.dev
-    """
-    cf_worker = CFWorker(email=YOUR_EMAIL, api_key=YOUR_API_KEY, account_id=YOUR_ACCOUNT_ID)
-    zone_id = cf_worker.get_zone_id(domain=HOME_DOMAIN)
-
-    prefixs = ['git', 'raw', 'assets', 'avatars', 'camo', 'codeload', 'releases', 'object']
-    for prefix in prefixs:
-        cf_worker.delete_dns_a_record(zone_id, f'{prefix}.{HOME_DOMAIN}')
-        cf_worker.delete_worker(prefix)
-        break;
 
 if __name__ == "__main__":
 
-    method1()
-    # method2()
+    method()
     
     # cf_worker = CFWorker(email=YOUR_EMAIL, api_key=YOUR_API_KEY, account_id=YOUR_ACCOUNT_ID)
     # subdomain = cf_worker.get_subdomain()
