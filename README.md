@@ -27,7 +27,7 @@
 
 ## 演示站点  
 <https://git.n1cee.workers.dev>  
-资源有限，仅供演示用。  
+资源有限，仅供演示用(北京时间8点开放一小时)。  
 
 ## 项目搭建实现的心路历程  
 + 先实现单一域名`github.com`最粗糙的代理(只修改url)  
@@ -43,15 +43,27 @@
 2. 注册，登入，Start building，取一个子域名Create a Worker。
 3. 复制 index.js 到左侧代码框，修改代码并保存。  
     ```js
-    const your_domain = '<你的自定义域名>.workers.dev'
+    const your_domain = '<你的自定义域名>'
     ```
     ps: 你也可以修改环境变量`HOME_DOMAIN`为你的域名
 
-4. 再参考步骤2~3，另外重复建立7个worker
-5. 将8个worker重命名为`git`、`raw`、`assets`、`avatars`、`camo`、`codeload`、`releases`、`object`
-6. 收藏地址框中的 `https://git.子域名.workers.dev`，以后可直接访问。  
-
-看不懂？点击<a href="https://nICEnnnnnnnLee.github.io/blog/2021/08/25/cloudflare-workers-github-proxy/" ><strong>这里</strong></a>傻瓜式超细致图文指导
+4. 将worker连接到自定义域名`git`、`gist`、`gist-notebooks`、`gist-ucontent`、`raw`、`assets`、`avatars`、`camo`、`codeload`、`releases`、`object`。  
+    ```
+    假设你的域名为 test.com,
+    需要设置的域名为
+    git.test.com
+    gist.test.com
+    gist-notebooks.test.com
+    gist-ucontent.test.com
+    raw.test.com
+    assets.test.com
+    avatars.test.com
+    camo.test.com
+    codeload.test.com
+    releases.test.com
+    object.test.com
+    ```
+    具体操作可以查看issue [如何Worker 连接到自定义域](https://github.com/nICEnnnnnnnLee/GithubSoEasy/issues/3)
 
 
 
@@ -60,17 +72,12 @@
 + 你需要以下两个文件
   + `create_workers.py`
   + `index.js`
-+ 如果你想利用现成的`xxx.workers.dev`域名，请修改`create_workers.py`
-```
-YOUR_EMAIL = "你的邮箱"
-YOUR_API_KEY = "你的全局API_KEY"
-```
 
-+ 如果你想自定义成自己的域名，请修改`create_workers.py`
++ 修改`create_workers.py`
 ```
 YOUR_EMAIL = "你的邮箱"
 YOUR_API_KEY = "你的全局API_KEY"
-HOME_DOMAIN = None # 当自定义域名时填入类似'xxx.com'，否则为空
+HOME_DOMAIN = "a.b.c" # 当前cloudflare账号控制的域名
 ```
 
 + 修改后直接运行
