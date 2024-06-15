@@ -24,6 +24,16 @@
   + 可访问私人repo、首页动态、Code类型搜索等大多数读操作
   + **不可以**Star、Fork、更改设置等增删改操作    
 
+## 关于反 Netcraft反钓鱼
+  镜像整个网站可能被netcraft扫描到，然后投诉，然后service taken down。你可以参考以下预防措施：  
+  + 域名只对中国大陆开放  
+  + `index.js`中设置`anti_spam_mode = 301_page_index`  
+    + 这意味着，在没有登录的时候，主页会301跳转到github
+  + `index.js`中设置`anti_spam_mode = check_cookie`  
+    + 这意味着，你的**浏览器**需要先访问特定的url获得授权，之后才能正常访问。  
+    这里，特定的url指的是`index.js`中的`valid_cookie_set_path`
+    + 这意味着，你的**Git客户端**的UserAgent需要符合前缀，然后才能正常使用。  
+    这里，特定的前缀指的是`index.js`中的`valid_user_agent_prefix`
 
 ## 演示站点  
 <https://git.n1cee.workers.dev>  

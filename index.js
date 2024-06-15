@@ -1,6 +1,15 @@
 
 const your_domain = this['HOME_DOMAIN'] || '<你的自定义域名>'
 const login_page = 'https://nICEnnnnnnnLee.github.io/GithubSoEasy/login.html'
+// 301_page_index: 未登录时将首页301到 github
+// check_cookie: 需要先访问url ${valid_cookie_set_path} 进行授权
+// raw: 不做处理
+const anti_spam_mode = '301_page_index'
+const valid_cookie_set_path = '/loginyyy?ko=1' // anti_spam_mode = check_cookie 时生效
+const valid_user_agent_prefix = 'git/' // anti_spam_mode = check_cookie 时生效，当userAgent以该值开头时跳过
+const valid_cookie_key = '_a' // anti_spam_mode = check_cookie 时生效
+const valid_cookie_val = 'a'  // anti_spam_mode = check_cookie 时生效
+const valid_cookie_str = `${valid_cookie_key}=${valid_cookie_val}`
 
 //返回html时的替换字典
 const replace_dicts = {
@@ -8,6 +17,8 @@ const replace_dicts = {
 }
 // 域名指向的路径
 const req_dicts = {}
+// 根据请求返回结果
+let func_response = null
 
 function init(domain) {
   const domain_pair_list = [
@@ -27,6 +38,18 @@ function init(domain) {
     replace_dicts['//' + pair[1]] = '//' + pair[0]
     req_dicts[pair[0]] = pair[1]
   })
+  switch (anti_spam_mode) {
+    case 'raw':
+      func_response = _raw_func
+      break
+    case 'check_cookie':
+      func_response = _check_cookie_func
+      break
+    case '301_page_index':
+    default:
+      func_response = _301_page_index_fuc
+      break
+  }
 }
 
 // 设置返回的cookies
@@ -41,18 +64,51 @@ function modifyCookies(headers) {
   });
 }
 
-init(your_domain)
-addEventListener("fetch", event => {
-  event.respondWith(fetchAndStream(event.request))
-})
+async function _raw_func(request, url) {
+  return fetchAndStream(request, url)
+}
+async function _check_cookie_func(request, url) {
+  // 若请求为指定url， 则设置cookie进行授权
+  if (url.href.endsWith(valid_cookie_set_path)) {
+    const millisecond = new Date().getTime()
+    const expiresTime = new Date(millisecond + 31536000000).toUTCString()
+    return new Response('授权成功，请重新访问', {
+      headers: { "Set-Cookie": `${valid_cookie_key}=${valid_cookie_val}; expires=${expiresTime}; domain=.${your_domain}; path=/; SameSite=None; Secure` },
+    });
+  }
+  // 校验cookie和 User-Agent/Referer头部，不行则返回403
+  const cookie = request.headers.get("Cookie") || ""
+  if (!cookie.includes(valid_cookie_str)) {
+    const ua = request.headers.get("User-Agent") || "";
+    const hasNoCorrectUA = !ua.startsWith(valid_user_agent_prefix)
+    const hasNoReferer = !request.headers.has("Referer")
+    if (hasNoCorrectUA && hasNoReferer) {
+      return new Response(`您无权访问\nBrowser UA: ${ua}`, { status: 403 })
+    }
+  }
+  return fetchAndStream(request, url)
+}
 
-async function fetchAndStream(request) {
+async function _301_page_index_fuc(request, url) {
+  if (url.pathname === '' || url.pathname === '/') {
+    const cookie = request.headers.get("Cookie") || "";
+    if (!cookie.includes('dotcom_user=')) {
+      const destinationURL = `https://${req_dicts[url.hostname]}`;
+      return Response.redirect(destinationURL, 301);
+    }
+  }
+  return fetchAndStream(request, url)
+}
 
-  // init(your_domain)
-  // 访问目标网站
-  const url = new URL(request.url);
+async function fetchAndStream(request, url) {
+  // 如果path是 /robots.txt
+  if (url.pathname === '/robots.txt') {
+    const content = `User-agent: *
+Disallow: /`
+    return new Response(content, { headers: { "Content-Type": 'text/plain' }, status: 200 })
+  }
   // 如果path是 /login
-  if(url.pathname == '/login'){
+  if (url.pathname === '/login') {
     return fetch(login_page)
   }
   const hostname = url.hostname;
@@ -74,7 +130,7 @@ async function fetchAndStream(request) {
   }
   // 对headers进行修饰
   new_response.headers.set('access-control-allow-origin', '*');
-  new_response.headers.set('access-control-allow-credentials', true);
+  new_response.headers.set('access-control-allow-credentials', 'true');
   new_response.headers.delete('content-security-policy');
   new_response.headers.delete('content-security-policy-report-only');
   new_response.headers.delete('clear-site-data');
@@ -100,7 +156,7 @@ async function fetchAndStream(request) {
 }
 
 function replaceText(origin_text) {
-  for (old in replace_dicts) {
+  for (const old in replace_dicts) {
     let re = new RegExp(old, 'g')
     origin_text = origin_text.replace(re, replace_dicts[old]);
     //console.log(`将${old}替换为${replace_dicts[old]}` )
@@ -134,7 +190,7 @@ function modifyRequest(request) {
   }
   new_request_headers.delete('x-forwarded-proto')
   //new_request_headers.forEach( (value, key) => {
-     //console.log(`${key} => ${value}`)
+  //console.log(`${key} => ${value}`)
   //})
   const modifiedRequest = new Request(new_url.href, {
     body: request.body,
@@ -144,3 +200,9 @@ function modifyRequest(request) {
   })
   return modifiedRequest
 }
+
+init(your_domain)
+addEventListener("fetch", event => {
+  const url = new URL(event.request.url)
+  event.respondWith(func_response(event.request, url))
+})
