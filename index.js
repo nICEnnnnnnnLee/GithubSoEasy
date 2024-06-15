@@ -81,8 +81,9 @@ async function _check_cookie_func(request, url) {
   if (!cookie.includes(valid_cookie_str)) {
     const ua = request.headers.get("User-Agent") || "";
     const hasNoCorrectUA = !ua.startsWith(valid_user_agent_prefix)
-    const hasNoReferer = !request.headers.has("Referer")
-    if (hasNoCorrectUA && hasNoReferer) {
+    const referer = request.headers.get("Referer") || "";
+    const hasNoCorrectReferer = !referer.includes(your_domain)
+    if (hasNoCorrectUA && hasNoCorrectReferer) {
       return new Response(`您无权访问\nBrowser UA: ${ua}`, { status: 403 })
     }
   }
