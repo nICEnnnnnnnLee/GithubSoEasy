@@ -95,3 +95,17 @@ HOME_DOMAIN = "a.b.c" # 当前cloudflare账号控制的域名
 pip install requests
 python create_workers.py
 ```
+
+## 其它
++ 如果你希望主域名为`example.com`的样式，而不是`git.example.com`，可以将相关代码注释、去注释，并自行添加路由。  
+  25行左右:
+  ```js
+  // [`${domain}`, 'github.com'],
+  [`git.${domain}`, 'github.com'],
+  ```
+  变为：
+  ```js
+  [`${domain}`, 'github.com'],
+  // [`git.${domain}`, 'github.com'],
+  ```
+
