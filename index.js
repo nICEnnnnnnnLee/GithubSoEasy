@@ -10,6 +10,15 @@ const valid_user_agent_prefix = 'git/' // anti_spam_mode = check_cookie 时生�
 const valid_cookie_key = '_a' // anti_spam_mode = check_cookie 时生效
 const valid_cookie_val = 'a'  // anti_spam_mode = check_cookie 时生效
 const valid_cookie_str = `${valid_cookie_key}=${valid_cookie_val}`
+const page403_html = `<html>
+<head><title>403 Forbidden</title></head>
+<body>
+<center><h1>403 Forbidden</h1></center>
+<hr><center>nginx/1.28.0</center>
+</body>
+</html>`;
+const page_robots = `User-agent: *
+Disallow: /`;
 
 //返回html时的替换字典
 const replace_dicts = {
@@ -85,7 +94,8 @@ async function _check_cookie_func(request, url) {
     const referer = request.headers.get("Referer") || "";
     const hasNoCorrectReferer = !referer.includes(your_domain)
     if (hasNoCorrectUA && hasNoCorrectReferer) {
-      return new Response(`您无权访问\nBrowser UA: ${ua}`, { status: 403 })
+      // return new Response(`您无权访问\nBrowser UA: ${ua}`, { status: 403 })
+      return new Response(page403_html, { headers: { "Content-Type": 'text/html; charset=utf-8' }, status: 403 });
     }
   }
   return fetchAndStream(request, url)
@@ -104,12 +114,6 @@ async function _301_page_index_fuc(request, url) {
 }
 
 async function fetchAndStream(request, url) {
-  // 如果path是 /robots.txt
-  if (url.pathname === '/robots.txt') {
-    const content = `User-agent: *
-Disallow: /`
-    return new Response(content, { headers: { "Content-Type": 'text/plain' }, status: 200 })
-  }
   // 如果hostname不在表里，重定向到 git.`${your_domain}`
   if (!req_dicts[url.hostname]) {
     return new Response(url.hostname, { headers: {
@@ -340,6 +344,13 @@ const login_html = `
 `
 init(your_domain)
 addEventListener("fetch", event => {
-  const url = new URL(event.request.url)
+  const url = new URL(event.request.url);
+  if (url.pathname === '/robots.txt') {
+    return new Response(page_robots, { headers: { "Content-Type": 'text/plain' }, status: 200 })
+  }
+  const country = event.request?.cf?.country;
+  if (country !== 'CN') {
+    return new Response(page403_html, { headers: { "Content-Type": 'text/html; charset=utf-8' }, status: 403 });
+  }
   event.respondWith(func_response(event.request, url))
 })
