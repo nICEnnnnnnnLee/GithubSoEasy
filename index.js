@@ -346,11 +346,13 @@ init(your_domain)
 addEventListener("fetch", event => {
   const url = new URL(event.request.url);
   if (url.pathname === '/robots.txt') {
-    return new Response(page_robots, { headers: { "Content-Type": 'text/plain' }, status: 200 })
+    event.respondWith( new Response(page_robots, { headers: { "Content-Type": 'text/plain' }, status: 200 }) );
+    return;
   }
   const country = event.request?.cf?.country;
   if (country !== 'CN') {
-    return new Response(page403_html, { headers: { "Content-Type": 'text/html; charset=utf-8' }, status: 403 });
+    event.respondWith( new Response(page403_html, { headers: { "Content-Type": 'text/html; charset=utf-8' }, status: 403 }) );
+    return;
   }
   event.respondWith(func_response(event.request, url))
 })
