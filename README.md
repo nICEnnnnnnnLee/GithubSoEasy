@@ -24,7 +24,21 @@
   + 可访问私人repo、首页动态、Code类型搜索等大多数读操作
   + **不可以**Star、Fork、更改设置等增删改操作    
 
+
+## 被 Netcraft 击落了
+某域名被Netcraft投诉abuse，看了cloudflare给的邮件，提交的证据图片大概样子如下：
+```
+您无权访问
+Browser UA: 某个iOS的UA
+```
+感觉挺抽象的。  
+常规的爬虫或者正常的访问不可能检测到首页有Github内容，只能说Netcraft不是什么好鸟。  
+另外这种图片能被作为钓鱼的证据，让CF停用域名，挺蛋疼的。  
+综上，**本项目请慎重使用，有被投诉abuse的风险**。
+
+
 ## 关于反 Netcraft反钓鱼
+  请看前一章节，效果不太保险。建议有能力的自行魔改。    
   镜像整个网站可能被netcraft扫描到，然后投诉，然后service taken down。你可以参考以下预防措施：  
   + 域名只对中国大陆开放  
   + `index.js`中设置`anti_spam_mode = 301_page_index`  
@@ -35,9 +49,6 @@
     + 这意味着，你的**Git客户端**的UserAgent需要符合前缀，然后才能正常使用。  
     这里，特定的前缀指的是`index.js`中的`valid_user_agent_prefix`
 
-## 演示站点  
-<https://git.n1cee.workers.dev>  
-资源有限，仅供演示用(北京时间8点开放一小时)。  
 
 ## 项目搭建实现的心路历程  
 + 先实现单一域名`github.com`最粗糙的代理(只修改url)  
