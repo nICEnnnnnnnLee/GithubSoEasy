@@ -205,11 +205,13 @@ function modifyRequest(request) {
   //new_request_headers.forEach( (value, key) => {
   //console.log(`${key} => ${value}`)
   //})
+  const regex = /^\/[^/]+\/[^/]+\/releases\/download\/.*$/;
+  const redirect = regex.test(url.pathname) ? 'follow' : request.redirect;
   const modifiedRequest = new Request(new_url.href, {
     body: request.body,
     headers: new_request_headers,
     method: request.method,
-    redirect: request.redirect
+    redirect: redirect
   })
   return modifiedRequest
 }
